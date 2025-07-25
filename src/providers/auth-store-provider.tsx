@@ -13,7 +13,6 @@ export default function AuthStoreProvider({
   profile: Profile;
 }) {
   useEffect(() => {
-    console.log("test sini");
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       useAuthStore.getState().setUser(user);
