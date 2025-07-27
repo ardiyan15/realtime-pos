@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { HEADER_TABLE_USER } from "@/constants/user-constant";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { count } from "console";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
