@@ -1,12 +1,14 @@
 "use client";
 
 import DataTable from "@/components/common/data-table";
+import DropdownAction from "@/components/common/dropdown-action";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { HEADER_TABLE_USER } from "@/constants/user-constant";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -38,7 +40,27 @@ export default function UserManagement() {
             user.id,
             user.name,
             user.role,
-            ''
+            <DropdownAction menu={[
+              {
+                label: (
+                  <span className="flex item-center gap-2">
+                    <Pencil />
+                    Edit
+                  </span>
+                ),
+                action: () => {}
+              },
+              {
+                label: (
+                  <span className="flex item-center gap-2">
+                    <Trash2 className="text-red-400" />
+                    Delete
+                  </span>
+                ),
+                variant: "destructive",
+                action: () => {}
+              }
+            ]}/>
         ]
     })
   }, [users])
