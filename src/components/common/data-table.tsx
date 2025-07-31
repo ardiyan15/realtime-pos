@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Card } from "../ui/card";
+import { ReactNode } from 'react';
+import { Card } from '../ui/card';
 import {
   Table,
   TableBody,
@@ -7,16 +7,27 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from '../ui/table';
+import PaginationDataTable from './pagination-data-table';
 
 export default function DataTable({
   header,
   data,
-  isLoading
+  isLoading,
+  totalPages,
+  currentPage,
+  currentLimit,
+  onChangePage,
+  onChangeLimit,
 }: {
   header: string[];
   data: (string | ReactNode)[][];
-  isLoading?: boolean
+  isLoading?: boolean;
+  totalPages: number;
+  currentPage: number;
+  currentLimit: number;
+  onChangePage: (page: number) => void;
+  onChangeLimit: (limit: number) => void;
 }) {
   return (
     <div className="w-full flex flex-col gap-4">
@@ -36,8 +47,8 @@ export default function DataTable({
               <TableRow key={`tr-${rowIndex}`}>
                 {row.map((column, columnIndex) => (
                   <TableCell
-                    key={`tc-${rowIndex}-${columnIndex}`}
                     className="px-6 py-3"
+                    key={`tc-${rowIndex}-${columnIndex}`}
                   >
                     {column}
                   </TableCell>
@@ -45,18 +56,34 @@ export default function DataTable({
               </TableRow>
             ))}
             {data?.length === 0 && !isLoading && (
-                <TableRow>
-                    <TableCell colSpan={header.length} className="h-24 text-center">No Result Data</TableCell>
-                </TableRow>
+              <TableRow>
+                <TableCell colSpan={header.length} className="h-24 text-center">
+                  No Result Data
+                </TableCell>
+              </TableRow>
             )}
             {isLoading && (
-                <TableRow>
-                    <TableCell colSpan={header.length} className="h-24 text-center">Loading</TableCell>
-                </TableRow>
+              <TableRow>
+                <TableCell colSpan={header.length} className="h-24 text-center">
+                  Loading...
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
       </Card>
+      <div className="flex items-center justify-between">
+        <div></div>
+        {totalPages > 1 && (
+          <div className="flex justify-end">
+            <PaginationDataTable
+              currentPage={currentPage}
+              onChangePage={onChangePage}
+              totalPages={totalPages}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
