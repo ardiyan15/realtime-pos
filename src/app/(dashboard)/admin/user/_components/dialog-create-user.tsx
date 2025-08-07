@@ -1,10 +1,18 @@
 import FormInput from "@/components/common/form-input";
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import {
   INITIAL_CREATE_USER_FORM,
   INITIAL_STATE_CREATE_USER,
+  ROLE_LIST,
 } from "@/constants/auth-constant";
 import {
   CreateUserForm,
@@ -16,8 +24,9 @@ import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { createUser } from "../action";
 import { toast } from "sonner";
+import FormSelect from "@/components/common/form-select";
 
-export default function DialogCreateUser({refetch}: {refetch: () => void}) {
+export default function DialogCreateUser({ refetch }: { refetch: () => void }) {
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
     defaultValues: INITIAL_CREATE_USER_FORM,
@@ -48,7 +57,7 @@ export default function DialogCreateUser({refetch}: {refetch: () => void}) {
       toast.success("Create User Success");
       form.reset();
       document.querySelector<HTMLButtonElement>('[data-state="open"]')?.click();
-      refetch()
+      refetch();
     }
   }, [createUserState]);
 
@@ -56,10 +65,8 @@ export default function DialogCreateUser({refetch}: {refetch: () => void}) {
     <DialogContent className="sm:max-w-[425px]">
       <Form {...form}>
         <DialogHeader>
-            <DialogTitle>Create User</DialogTitle>
-            <DialogDescription>
-                register a new user
-            </DialogDescription>
+          <DialogTitle>Create User</DialogTitle>
+          <DialogDescription>register a new user</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <FormInput
@@ -75,11 +82,11 @@ export default function DialogCreateUser({refetch}: {refetch: () => void}) {
             label="Email"
             placeholder="Enter your email"
           />
-          <FormInput
+          <FormSelect
             form={form}
             name="role"
             label="role"
-            placeholder="Insert your role"
+            selectItem={ROLE_LIST}
           />
           <FormInput
             form={form}
@@ -90,15 +97,15 @@ export default function DialogCreateUser({refetch}: {refetch: () => void}) {
           />
           <DialogFooter>
             <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+              <Button variant="outline">Cancel</Button>
             </DialogClose>
-          <Button type="submit">
-            {isPendingCreateUser ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              "Create"
-            )}
-          </Button>
+            <Button type="submit">
+              {isPendingCreateUser ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Create"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </Form>
