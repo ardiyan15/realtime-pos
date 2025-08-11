@@ -1,6 +1,5 @@
 import { DEFAULT_LIMIT, DEFAULT_PAGE } from "@/constants/data-table-constant";
 import { useState } from "react";
-import { set } from "zod";
 import useDebounce from "./use-debounce";
 
 export default function useDataTable() {
