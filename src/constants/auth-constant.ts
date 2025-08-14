@@ -24,8 +24,8 @@ export const INITIAL_CREATE_USER_FORM = {
   role: '',
   avatar_url: '',
   email: '',
-  password: ''
-}
+  password: '',
+};
 
 export const INITIAL_STATE_CREATE_USER = {
   status: 'idle',
@@ -62,4 +62,15 @@ export const ROLE_LIST = [
     value: 'cashier',
     label: 'Cashier',
   },
-]
+];
+
+export const AVAILABILITY_LIST = [
+  {
+    value: 'true',
+    label: 'Available',
+  },
+  {
+    value: 'false',
+    label: 'Not Available',
+  },
+];

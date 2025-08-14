@@ -15,6 +15,7 @@ import { Menu } from "@/validations/menu-validation";
 import Image from "next/image";
 import { cn, convertIDR } from "@/lib/utils";
 import { HEADER_TABLE_MENU } from "@/constants/menu-constant";
+import DialogCreateMenu from "./dialog-create-menu";
 
 export default function MenuManagement() {
   const supabase = createClient();
@@ -81,14 +82,21 @@ export default function MenuManagement() {
         </div>,
         menu.category,
         <div>
-            <p>Base: {convertIDR(menu.price)}</p>
-            <p>Discount: {menu.discount}</p>
-            <p>After Discount: {convertIDR(menu.price - (menu.price * menu.discount / 100))}</p>
+          <p>Base: {convertIDR(menu.price)}</p>
+          <p>Discount: {menu.discount}</p>
+          <p>
+            After Discount:{" "}
+            {convertIDR(menu.price - (menu.price * menu.discount) / 100)}
+          </p>
         </div>,
-        <div className={cn(
-            'px-2 py-1 rounded-full text-white w-fit',
-            menu.is_available ? 'bg-green-600' : 'bg-red-500'
-        )}>{menu.is_available ? "Available" : "Not Available"}</div>,
+        <div
+          className={cn(
+            "px-2 py-1 rounded-full text-white w-fit",
+            menu.is_available ? "bg-green-600" : "bg-red-500"
+          )}
+        >
+          {menu.is_available ? "Available" : "Not Available"}
+        </div>,
         <DropdownAction
           menu={[
             {
@@ -145,6 +153,7 @@ export default function MenuManagement() {
             <DialogTrigger asChild>
               <Button variant="outline">Create</Button>
             </DialogTrigger>
+            <DialogCreateMenu refetch={refetch} />
           </Dialog>
         </div>
       </div>

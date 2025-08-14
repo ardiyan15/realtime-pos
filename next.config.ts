@@ -9,8 +9,14 @@ const nextConfig: NextConfig = {
 
   devIndicators: false,
   images: {
-    domains: ["https://hlnyevvoylahyatjsnbc.supabase.co"],
+    domains: ["https://hlnyevvoylahyatjsnbc.storage.supabase.co", "https://hlnyevvoylahyatjsnbc.supabase.co"],
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'hlnyevvoylahyatjsnbc.storage.supabase.co',
+        port: '',
+        pathname: '/**'
+      },
       {
         protocol: 'https',
         hostname: 'hlnyevvoylahyatjsnbc.supabase.co',
