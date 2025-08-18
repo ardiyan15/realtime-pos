@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Table } from "@/validations/table-validation";
 import { HEADER_TABLE_TABLE } from "@/constants/table-constant";
 import DialogCreateTable from "./dialog-create-table";
+import DialogUpdateTable from "./dialog-update-table";
+import DialogDeleteTable from "./dialog-delete-table";
 
 export default function TableManagement() {
   const supabase = createClient();
@@ -41,7 +43,7 @@ export default function TableManagement() {
 
       if (currentSearch) {
         query.or(
-          `name.ilike.%${currentSearch}%,capacity.ilike.%${currentSearch}%,status.ilike.%${currentSearch}%`
+          `name.ilike.%${currentSearch}%,description.ilike.%${currentSearch}%,status.ilike.%${currentSearch}%`
         );
       }
 
@@ -74,11 +76,12 @@ export default function TableManagement() {
           <p className="text-xs">{table.description}</p>
         </div>,
         table.capacity,
-        <div className={cn(`px-2 py-1 rounded-full text-white w-fit capitalize`, {
-          'bg-green-600' : table.status === 'available',
-          'bg-red-600' : table.status === 'unavailable',
-          'bg-yellow-600' : table.status === 'reserved',
-        })}
+        <div
+          className={cn(`px-2 py-1 rounded-full text-white w-fit capitalize`, {
+            "bg-green-600": table.status === "available",
+            "bg-red-600": table.status === "unavailable",
+            "bg-yellow-600": table.status === "reserved",
+          })}
         >
           {table.status}
         </div>,
@@ -131,14 +134,14 @@ export default function TableManagement() {
         <h1 className="text-2xl font-bold">Table Management</h1>
         <div className="flex gap-2">
           <Input
-            placeholder="Search by name, capacity and status"
+            placeholder="Search"
             onChange={(e) => handleChangeSearch(e.target.value)}
           />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">Create</Button>
             </DialogTrigger>
-            <DialogCreateTable refetch={refetch}/>
+            <DialogCreateTable refetch={refetch} />
           </Dialog>
         </div>
       </div>
@@ -151,6 +154,18 @@ export default function TableManagement() {
         currentLimit={currentLimit}
         onChangePage={handleChangePage}
         onChangeLimit={handleChangeLimit}
+      />
+      <DialogUpdateTable
+        open={selectedAction !== null && selectedAction.type === "update"}
+        refetch={refetch}
+        currentData={selectedAction?.data}
+        handleChangeAction={handleChangeAction}
+      />
+      <DialogDeleteTable
+        open={selectedAction !== null && selectedAction.type === "delete"}
+        refetch={refetch}
+        currentData={selectedAction?.data}
+        handleChangeAction={handleChangeAction}
       />
     </div>
   );
