@@ -102,7 +102,7 @@ export default function DetailOrder({ id }: { id: string }) {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between gap-4 w-full">
         <h1 className="text-2xl font-bold">Detail Order</h1>
-        <Link href="">
+        <Link href={`/order/${id}/add`}>
           <Button>Add Order Item</Button>
         </Link>
       </div>
@@ -120,9 +120,9 @@ export default function DetailOrder({ id }: { id: string }) {
           />
         </div>
         <div className="lg:w-1/3">
-            {order && (
-                <Summary order={order} orderMenu={orderMenu?.data} id={id} />
-            )}
+          {order && (
+            <Summary order={order} orderMenu={orderMenu?.data} id={id} />
+          )}
         </div>
       </div>
     </div>
