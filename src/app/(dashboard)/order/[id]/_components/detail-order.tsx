@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import Summary from "./summary";
 
 export default function DetailOrder({ id }: { id: string }) {
   const supabase = createClient();
@@ -106,18 +107,24 @@ export default function DetailOrder({ id }: { id: string }) {
         </Link>
       </div>
       <div className="flex flex-col lg:flex-row gap-4 w-full">
-        <div className="lg:w-2/3"></div>
+        <div className="lg:w-2/3">
+          <DataTable
+            header={HEADER_TABLE_DETAIL_ORDER}
+            data={filteredData}
+            isLoading={isLoadingOrderMenu}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            currentLimit={currentLimit}
+            onChangePage={handleChangePage}
+            onChangeLimit={handleChangeLimit}
+          />
+        </div>
+        <div className="lg:w-1/3">
+            {order && (
+                <Summary order={order} orderMenu={orderMenu?.data} id={id} />
+            )}
+        </div>
       </div>
-      <DataTable
-        header={HEADER_TABLE_DETAIL_ORDER}
-        data={filteredData}
-        isLoading={isLoadingOrderMenu}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        currentLimit={currentLimit}
-        onChangePage={handleChangePage}
-        onChangeLimit={handleChangeLimit}
-      />
     </div>
   );
 }
