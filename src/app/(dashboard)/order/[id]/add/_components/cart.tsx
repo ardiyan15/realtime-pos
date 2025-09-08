@@ -8,13 +8,23 @@ import { convertIDR } from "@/lib/utils";
 import { Cart } from "@/types/order";
 import { Menu } from "@/validations/menu-validation";
 import Image from "next/image";
-import { Dispatch, SetStateAction } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  startTransition,
+  useActionState,
+} from "react";
+import { addOrderItem } from "../../../actions";
+import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
+import { Loader2 } from "lucide-react";
 
 export default function CartSection({
   order,
   carts,
   setCarts,
   onAddToCart,
+  isLoading,
+  onOrder,
 }: {
   order:
     | {
@@ -29,12 +39,32 @@ export default function CartSection({
   carts: Cart[];
   setCarts: Dispatch<SetStateAction<Cart[]>>;
   onAddToCart: (item: Menu, type: "decrement" | "increment") => void;
+  isLoading?: boolean;
+  onOrder: () => void;
 }) {
   const debounce = useDebounce();
   const handleAddNote = (id: string, notes: string) => {
     setCarts(
       carts.map((item) => (item.menu_id === id ? { ...item, notes } : item))
     );
+  };
+
+  const [addOrderItemState, addOrderItemAction, isPendingAddOrderItem] =
+    useActionState(addOrderItem, INITIAL_STATE_ACTION);
+
+  const handleOrder = async () => {
+    const data = {
+      order_id: id,
+      items: carts.map((item) => ({
+        order_id: order?.id ?? "",
+        ...item,
+        status: "pending",
+      })),
+    };
+
+    startTransition(() => {
+      addOrderItemAction(data);
+    });
   };
 
   return (
@@ -114,6 +144,12 @@ export default function CartSection({
           ) : (
             <p className="text-sm">No item in cart</p>
           )}
+          <Button
+            onClick={onOrder}
+            className="w-full font-semibold bg-teal-500 hover:bg-teal-600 cursor-pointer text-white"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : "Order"}
+          </Button>
         </div>
       </CardContent>
     </Card>
