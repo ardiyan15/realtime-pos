@@ -23,7 +23,6 @@ export async function createClient({ isAdmin = false}: createClientOptions = {})
                     } catch {
                         console.error("Failed to set cookies", cookiesToSet);
                     }
-
                 }
             }
         }

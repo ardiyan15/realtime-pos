@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 
 export async function login(prevState: AuthFormState, formData: FormData | null) {
 
-    if(!formData) {
+    if (!formData) {
         return INITIAL_STATE_LOGIN_FORM;
     }
 
@@ -24,7 +24,7 @@ export async function login(prevState: AuthFormState, formData: FormData | null)
             status: "error",
             errors: {
                 ...validatedFields.error.flatten().fieldErrors,
-                _form: [],            
+                _form: [],
             }
         }
     }
@@ -45,7 +45,7 @@ export async function login(prevState: AuthFormState, formData: FormData | null)
 
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single();
 
-    if(profile) {
+    if (profile) {
         const cookieStore = await cookies();
         cookieStore.set('user_profile', JSON.stringify(profile), {
             httpOnly: true,
@@ -56,5 +56,6 @@ export async function login(prevState: AuthFormState, formData: FormData | null)
     }
 
     revalidatePath('/', 'layout');
-    redirect('/');
+    // redirect('/');
+    redirect("/otp?next=/");
 }
