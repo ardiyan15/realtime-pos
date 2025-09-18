@@ -11,15 +11,39 @@ function hashCode(code: string) {
     return crypto.createHash('sha256').update(code).digest('hex');
 }
 
+function normalizePhone(p: string) {
+    let x = p.trim()
+    if(x.startsWith("+")) x = x.slice(1);
+    if(x.startsWith("0")) x = "62" + x.slice(1);
+
+    return x;
+}
+
 export async function POST(req: Request) {
     try {
-        const { phone, userId } = await req.json();
+        const { userId } = await req.json();
+
+        if (!userId) return NextResponse.json({ error: 'userId wajib' }, { status: 400 });
+
+        const supabase = await createClient();
+
+        const { data: profile, error: pErr } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', userId)
+            .single()
+
+
+        if (pErr || !profile?.phone) {
+            return NextResponse.json({ error: 'Nomor WA belum ada di profil' }, { status: 400 });
+        }
+
+        const phone = normalizePhone(profile.phone);
 
         if (!phone || !userId) {
             return NextResponse.json({ error: "Phone and User ID are required" }, { status: 400 })
         }
 
-        const supabase = await createClient();
 
         const { data: recent } = await supabase
             .from('otp_codes')

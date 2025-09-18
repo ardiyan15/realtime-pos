@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
@@ -9,10 +8,10 @@ function hashCode(code: string) {
 
 export async function POST(req: Request) {
     try {
-        const { phone, userId, code } = await req.json();
+        const { userId, code } = await req.json();
 
-        if(!phone || !userId || !code) {
-            return NextResponse.json({ error: "Phone, User ID, and Code are required" }, { status: 400 })
+        if(!userId || !code) {
+            return NextResponse.json({ error: "User ID, and Code are required" }, { status: 400 })
         }
 
         const codeHash = hashCode(code);
@@ -23,7 +22,6 @@ export async function POST(req: Request) {
             .from('otp_codes')
             .select("*")
             .eq("user_id", userId)
-            .eq("phone", phone)
             .order('created_at', { ascending: false })
             .limit(5);
 
