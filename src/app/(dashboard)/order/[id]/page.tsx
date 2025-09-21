@@ -1,10 +1,16 @@
-import Script from "next/script";
-import DetailOrder from "./_components/detail-order";
-import { environment } from "@/configs/environment";
+import Script from 'next/script';
+import DetailOrder from './_components/detail-order';
+import { environment } from '@/configs/environment';
 
 export const metadata = {
-  title: "My Cafe | Detail Order",
+  title: 'WPU Cafe | Detail Order',
 };
+
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
 
 export default async function DetailOrderPage({
   params,
@@ -19,7 +25,7 @@ export default async function DetailOrderPage({
         data-client-key={environment.MIDTRANS_CLIENT_KEY}
         strategy="lazyOnload"
       />
-      <DetailOrder id={id} />;
+      <DetailOrder id={id} />
     </div>
   );
 }

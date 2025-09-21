@@ -1,24 +1,23 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FILTER_MENU } from "@/constants/order-constant";
-import useDataTable from "@/hooks/use-data-table";
-import { createClient } from "@/lib/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import CardMenu from "./card-menu";
-import LoadingCardMenu from "./loading-card-menu";
-import CartSection from "./cart";
-import { startTransition, useActionState, useState } from "react";
-import { Cart } from "@/types/order";
-import { Menu } from "@/validations/menu-validation";
-import { addOrderItem } from "../../../actions";
-import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FILTER_MENU } from '@/constants/order-constant';
+import useDataTable from '@/hooks/use-data-table';
+import { createClient } from '@/lib/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import CardMenu from './card-menu';
+import LoadingCardMenu from './loading-card-menu';
+import CartSection from './cart';
+import { startTransition, useActionState, useState } from 'react';
+import { Cart } from '@/types/order';
+import { Menu } from '@/validations/menu-validation';
+import { addOrderItem } from '../../../actions';
+import { INITIAL_STATE_ACTION } from '@/constants/general-constant';
 
 export default function AddOrderItem({ id }: { id: string }) {
   const supabase = createClient();
-
   const {
     currentSearch,
     currentFilter,
@@ -27,23 +26,23 @@ export default function AddOrderItem({ id }: { id: string }) {
   } = useDataTable();
 
   const { data: menus, isLoading: isLoadingMenu } = useQuery({
-    queryKey: ["menus", currentSearch, currentFilter],
+    queryKey: ['menus', currentSearch, currentFilter],
     queryFn: async () => {
       const query = supabase
-        .from("menus")
-        .select("*", { count: "exact" })
-        .order("created_at")
-        .eq("is_available", true)
-        .ilike("name", `%${currentSearch}%`);
+        .from('menus')
+        .select('*', { count: 'exact' })
+        .order('created_at')
+        .eq('is_available', true)
+        .ilike('name', `%${currentSearch}%`);
 
       if (currentFilter) {
-        query.eq("category", currentFilter);
+        query.eq('category', currentFilter);
       }
 
       const result = await query;
 
       if (result.error)
-        toast.error("Get Menu data failed", {
+        toast.error('Get Menu data failed', {
           description: result.error.message,
         });
 
@@ -52,32 +51,30 @@ export default function AddOrderItem({ id }: { id: string }) {
   });
 
   const { data: order } = useQuery({
-    queryKey: ["order", id],
+    queryKey: ['order', id],
     queryFn: async () => {
       const result = await supabase
-        .from("orders")
-        .select("id, customer_name, status, payment_url, tables (name, id)")
-        .eq("order_id", id)
+        .from('orders')
+        .select('id, customer_name, status, payment_token, tables (name, id)')
+        .eq('order_id', id)
         .single();
 
       if (result.error)
-        toast.error("Get Order data failed", {
+        toast.error('Get Order data failed', {
           description: result.error.message,
         });
 
       return result.data;
     },
-
     enabled: !!id,
   });
 
   const [carts, setCarts] = useState<Cart[]>([]);
 
-  const handleAddToCart = (menu: Menu, action: "increment" | "decrement") => {
+  const handleAddToCart = (menu: Menu, action: 'increment' | 'decrement') => {
     const existingItem = carts.find((item) => item.menu_id === menu.id);
-
     if (existingItem) {
-      if (action === "decrement") {
+      if (action === 'decrement') {
         if (existingItem.quantity > 1) {
           setCarts(
             carts.map((item) =>
@@ -87,8 +84,8 @@ export default function AddOrderItem({ id }: { id: string }) {
                     quantity: item.quantity - 1,
                     total: item.total - menu.price,
                   }
-                : item
-            )
+                : item,
+            ),
           );
         } else {
           setCarts(carts.filter((item) => item.menu_id !== menu.id));
@@ -102,35 +99,35 @@ export default function AddOrderItem({ id }: { id: string }) {
                   quantity: item.quantity + 1,
                   total: item.total + menu.price,
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } else {
       setCarts([
         ...carts,
-        { menu_id: menu.id, quantity: 1, total: menu.price, notes: "", menu },
+        { menu_id: menu.id, quantity: 1, total: menu.price, notes: '', menu },
       ]);
     }
   };
 
   const [addOrderItemState, addOrderItemAction, isPendingAddOrderItem] =
-        useActionState(addOrderItem, INITIAL_STATE_ACTION);
-    
-      const handleOrder = async () => {
-        const data = {
-          order_id: id,
-          items: carts.map((item) => ({
-            order_id: order?.id ?? "",
-            ...item,
-            status: "pending",
-          })),
-        };
-    
-        startTransition(() => {
-          addOrderItemAction(data);
-        });
-      };
+    useActionState(addOrderItem, INITIAL_STATE_ACTION);
+
+  const handleOrder = async () => {
+    const data = {
+      order_id: id,
+      items: carts.map((item) => ({
+        order_id: order?.id ?? '',
+        ...item,
+        status: 'pending',
+      })),
+    };
+
+    startTransition(() => {
+      addOrderItemAction(data);
+    });
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
@@ -142,8 +139,8 @@ export default function AddOrderItem({ id }: { id: string }) {
               {FILTER_MENU.map((item) => (
                 <Button
                   key={item.value}
-                  variant={currentFilter === item.value ? "default" : "outline"}
                   onClick={() => handleChangeFilter(item.value)}
+                  variant={currentFilter === item.value ? 'default' : 'outline'}
                 >
                   {item.label}
                 </Button>
@@ -161,8 +158,8 @@ export default function AddOrderItem({ id }: { id: string }) {
           <div className="grid grid-cols-2 lg:grid-cols-3 w-full gap-4">
             {menus?.data?.map((menu) => (
               <CardMenu
-                key={`menu-${menu.id}`}
                 menu={menu}
+                key={`menu-${menu.id}`}
                 onAddToCart={handleAddToCart}
               />
             ))}
