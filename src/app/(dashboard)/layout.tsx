@@ -9,6 +9,8 @@ import {
 import { ReactNode } from "react";
 import DashboardBreadCrumb from "./_components/dashboard-breadcrumb";
 
+export const dynamic = 'force-dynamic';
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>

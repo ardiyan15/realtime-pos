@@ -1,25 +1,26 @@
 "use client";
 
-import Image from "next/image";
-import { Menu } from "@/validations/menu-validation";
-import { useMemo, useState } from "react";
-import useDataTable from "@/hooks/use-data-table";
-import { cn, convertIDR } from "@/lib/utils";
-import DropdownAction from "@/components/common/dropdown-action";
-import { Pencil, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import DataTable from "@/components/common/data-table";
+import DropdownAction from "@/components/common/dropdown-action";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import useDataTable from "@/hooks/use-data-table";
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Menu } from "@/validations/menu-validation";
+import Image from "next/image";
+import { cn, convertIDR } from "@/lib/utils";
 import { HEADER_TABLE_MENU } from "@/constants/menu-constant";
+import DialogCreateMenu from "./dialog-create-menu";
 import DialogUpdateMenu from "./dialog-update-menu";
 import DialogDeleteMenu from "./dialog-delete-menu";
-import DialogCreateMenu from "./dialog-create-menu";
-import { useRouter } from "next/navigation";
 
-export default function MenuManagemenet({ initialMenus }: { initialMenus: Menu[] }) {
-  const router = useRouter();
-
+export default function MenuManagement() {
+  const supabase = createClient();
   const {
     currentPage,
     currentLimit,
@@ -28,6 +29,35 @@ export default function MenuManagemenet({ initialMenus }: { initialMenus: Menu[]
     handleChangeLimit,
     handleChangeSearch,
   } = useDataTable();
+  const {
+    data: menus,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["menus", currentPage, currentLimit, currentSearch],
+    queryFn: async () => {
+      const query = supabase
+        .from("menus")
+        .select("*", { count: "exact" })
+        .range((currentPage - 1) * currentLimit, currentPage * currentLimit - 1)
+        .order("created_at");
+
+      if (currentSearch) {
+        query.or(
+          `name.ilike.%${currentSearch}%,category.ilike.%${currentSearch}%`
+        );
+      }
+
+      const result = await query;
+
+      if (result.error)
+        toast.error("Get Menu data failed", {
+          description: result.error.message,
+        });
+
+      return result;
+    },
+  });
 
   const [selectedAction, setSelectedAction] = useState<{
     data: Menu;
@@ -38,44 +68,30 @@ export default function MenuManagemenet({ initialMenus }: { initialMenus: Menu[]
     if (!open) setSelectedAction(null);
   };
 
-  // Filter di client
-  const filtered = useMemo(() => {
-    const q = (currentSearch || "").toLowerCase();
-    if (!q) return initialMenus;
-    return initialMenus.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        (m.category || "").toLowerCase().includes(q)
-    );
-  }, [initialMenus, currentSearch]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / currentLimit));
-  const start = (currentPage - 1) * currentLimit;
-  const pageItems = filtered.slice(start, start + currentLimit);
-
-  const rows = useMemo(() => {
-    return pageItems.map((menu, index) => {
-      const afterDiscount = menu.price - (menu.price * menu.discount) / 100;
+  const filteredData = useMemo(() => {
+    return (menus?.data || []).map((menu: Menu, index) => {
       return [
-        start + index + 1,
-        <div className="flex items-center gap-2" key={`col-img-${menu.id}`}>
+        currentLimit * (currentPage - 1) + index + 1,
+        <div className="flex items-center gap-2">
           <Image
-            src={(menu.image_url as string) || "/placeholder.png"}
+            src={menu.image_url as string}
             alt={menu.name}
             width={40}
             height={40}
-            className="rounded object-cover"
+            className="rounded"
           />
           {menu.name}
         </div>,
         menu.category,
-        <div key={`price-${menu.id}`}>
+        <div>
           <p>Base: {convertIDR(menu.price)}</p>
-          <p>Discount: {menu.discount}%</p>
-          <p>After Discount: {convertIDR(afterDiscount)}</p>
+          <p>Discount: {menu.discount}</p>
+          <p>
+            After Discount:{" "}
+            {convertIDR(menu.price - (menu.price * menu.discount) / 100)}
+          </p>
         </div>,
         <div
-          key={`avail-${menu.id}`}
           className={cn(
             "px-2 py-1 rounded-full text-white w-fit",
             menu.is_available ? "bg-green-600" : "bg-red-500"
@@ -84,44 +100,47 @@ export default function MenuManagemenet({ initialMenus }: { initialMenus: Menu[]
           {menu.is_available ? "Available" : "Not Available"}
         </div>,
         <DropdownAction
-          key={`act-${menu.id}`}
           menu={[
             {
               label: (
-                <span className="flex items-center gap-2">
+                <span className="flex item-center gap-2">
                   <Pencil />
                   Edit
                 </span>
               ),
               action: () => {
-                setSelectedAction({ data: menu, type: "update" });
+                setSelectedAction({
+                  data: menu,
+                  type: "update",
+                });
               },
             },
             {
               label: (
-                <span className="flex items-center gap-2">
+                <span className="flex item-center gap-2">
                   <Trash2 className="text-red-400" />
                   Delete
                 </span>
               ),
               variant: "destructive",
               action: () => {
-                setSelectedAction({ data: menu, type: "delete" });
+                setSelectedAction({
+                  data: menu,
+                  type: "delete",
+                });
               },
             },
           ]}
         />,
       ];
     });
-  }, [pageItems, start, currentLimit]);
+  }, [menus]);
 
-  const afterMutate = async () => {
-    try {
-      await fetch("/api/revalidate/menus", { method: "POST" });
-    } finally {
-      router.refresh();
-    }
-  };
+  const totalPages = useMemo(() => {
+    return menus && menus.count !== null
+      ? Math.ceil(menus.count / currentLimit)
+      : 0;
+  }, [menus]);
 
   return (
     <div className="w-full">
@@ -136,30 +155,29 @@ export default function MenuManagemenet({ initialMenus }: { initialMenus: Menu[]
             <DialogTrigger asChild>
               <Button variant="outline">Create</Button>
             </DialogTrigger>
-            <DialogCreateMenu refetch={afterMutate} />
+            <DialogCreateMenu refetch={refetch} />
           </Dialog>
         </div>
       </div>
-
       <DataTable
         header={HEADER_TABLE_MENU}
-        data={rows}
+        data={filteredData}
+        isLoading={isLoading}
         totalPages={totalPages}
         currentPage={currentPage}
         currentLimit={currentLimit}
         onChangePage={handleChangePage}
         onChangeLimit={handleChangeLimit}
       />
-
       <DialogUpdateMenu
-        open={selectedAction?.type === "update"}
-        refetch={afterMutate}
+        open={selectedAction !== null && selectedAction.type === "update"}
+        refetch={refetch}
         currentData={selectedAction?.data}
         handleChangeAction={handleChangeAction}
       />
       <DialogDeleteMenu
-        open={selectedAction?.type === "delete"}
-        refetch={afterMutate}
+        open={selectedAction !== null && selectedAction.type === "delete"}
+        refetch={refetch}
         currentData={selectedAction?.data}
         handleChangeAction={handleChangeAction}
       />

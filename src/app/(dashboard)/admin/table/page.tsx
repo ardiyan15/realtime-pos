@@ -4,6 +4,6 @@ export const metadata = {
   title: "My Cafe | Table Management",
 };
 
-export default function MenuManagementPage() {
+export default function TableManagementPage() {
   return <TableManagemenet />;
 }
