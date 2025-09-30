@@ -1,37 +1,33 @@
-"use client";
+'use client';
 
-import DataTable from "@/components/common/data-table";
-import DropdownAction from "@/components/common/dropdown-action";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import useDataTable from "@/hooks/use-data-table";
-import { createClient } from "@/lib/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { Ban, Link2Icon, Pencil, ScrollText, Trash2 } from "lucide-react";
+import DataTable from '@/components/common/data-table';
+import DropdownAction from '@/components/common/dropdown-action';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import useDataTable from '@/hooks/use-data-table';
+import { createClientSupabase } from '@/lib/supabase/default';
+import { useQuery } from '@tanstack/react-query';
+import { Ban, Link2Icon, Pencil, ScrollText, Trash2 } from 'lucide-react';
 import {
   startTransition,
   useActionState,
   useEffect,
   useMemo,
   useState,
-} from "react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Table } from "@/validations/table-validation";
-import { HEADER_TABLE_TABLE } from "@/constants/table-constant";
-import {
-  HEADER_TABLE_ORDER,
-  INITIAL_STATE_ORDER,
-} from "@/constants/order-constant";
-import DialogCreateOrder from "./dialog-create-order";
-import { updateReservation } from "../actions";
-import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
-import Link from "next/link";
-import { useAuthStore } from "@/stores/auth-store";
+} from 'react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { Table } from '@/validations/table-validation';
+import { HEADER_TABLE_ORDER } from '@/constants/order-constant';
+import DialogCreateOrder from './dialog-create-order';
+import { updateReservation } from '../actions';
+import { INITIAL_STATE_ACTION } from '@/constants/general-constant';
+import Link from 'next/link';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function OrderManagement() {
-  const supabase = createClient();
+  const supabase = createClientSupabase();
   const {
     currentPage,
     currentLimit,
@@ -40,37 +36,36 @@ export default function OrderManagement() {
     handleChangeLimit,
     handleChangeSearch,
   } = useDataTable();
-
   const profile = useAuthStore((state) => state.profile);
 
   const {
     data: orders,
     isLoading,
-    refetch,
+    refetch: refetchOrders,
   } = useQuery({
-    queryKey: ["orders", currentPage, currentLimit, currentSearch],
+    queryKey: ['orders', currentPage, currentLimit, currentSearch],
     queryFn: async () => {
       const query = supabase
-        .from("orders")
+        .from('orders')
         .select(
           `
             id, order_id, customer_name, status, payment_token, tables (name, id)
             `,
-          { count: "exact" }
+          { count: 'exact' },
         )
         .range((currentPage - 1) * currentLimit, currentPage * currentLimit - 1)
-        .order("created_at");
+        .order('created_at');
 
       if (currentSearch) {
         query.or(
-          `order_id.ilike.%${currentSearch}%,customer_name.ilike.%${currentSearch}%`
+          `order_id.ilike.%${currentSearch}%,customer_name.ilike.%${currentSearch}%`,
         );
       }
 
       const result = await query;
 
       if (result.error)
-        toast.error("Get Order data failed", {
+        toast.error('Get Order data failed', {
           description: result.error.message,
         });
 
@@ -79,21 +74,43 @@ export default function OrderManagement() {
   });
 
   const { data: tables, refetch: refetchTables } = useQuery({
-    queryKey: ["tables"],
+    queryKey: ['tables'],
     queryFn: async () => {
       const result = await supabase
-        .from("tables")
-        .select("*")
-        .order("created_at")
-        .order("status");
+        .from('tables')
+        .select('*')
+        .order('created_at')
+        .order('status');
 
       return result.data;
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('change-order')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+        },
+        () => {
+          refetchOrders();
+          refetchTables();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const [selectedAction, setSelectedAction] = useState<{
     data: Table;
-    type: "update" | "delete";
+    type: 'update' | 'delete';
   } | null>(null);
 
   const handleChangeAction = (open: boolean) => {
@@ -108,7 +125,7 @@ export default function OrderManagement() {
 
   const [reservedState, reservedAction] = useActionState(
     updateReservation,
-    INITIAL_STATE_ACTION
+    INITIAL_STATE_ACTION,
   );
 
   const handleReservation = async ({
@@ -130,15 +147,15 @@ export default function OrderManagement() {
   };
 
   useEffect(() => {
-    if (reservedState?.status === "error") {
-      toast.error("Update Reservation Failed", {
+    if (reservedState?.status === 'error') {
+      toast.error('Update Reservation Failed', {
         description: reservedState.errors?._form?.[0],
       });
     }
 
-    if (reservedState?.status === "success") {
-      toast.success("Update Reservation Success");
-      refetch();
+    if (reservedState?.status === 'success') {
+      toast.success('Update Reservation Success');
+      refetchOrders();
     }
   }, [reservedState]);
 
@@ -151,7 +168,7 @@ export default function OrderManagement() {
         </span>
       ),
       action: (id: string, table_id: string) => {
-        handleReservation({ id, table_id, status: "process" });
+        handleReservation({ id, table_id, status: 'process' });
       },
     },
     {
@@ -162,7 +179,7 @@ export default function OrderManagement() {
         </span>
       ),
       action: (id: string, table_id: string) => {
-        handleReservation({ id, table_id, status: "canceled" });
+        handleReservation({ id, table_id, status: 'canceled' });
       },
     },
   ];
@@ -175,24 +192,24 @@ export default function OrderManagement() {
         order.customer_name,
         (order.tables as unknown as { name: string }).name,
         <div
-          className={cn("px-2 py-1 rounded-full text-white w-fit capitalize", {
-            "bg-lime-600": order.status === "settled",
-            "bg-sky-600": order.status === "process",
-            "bg-amber-600": order.status === "reserved",
-            "bg-red-600": order.status === "canceled",
+          className={cn('px-2 py-1 rounded-full text-white w-fit capitalize', {
+            'bg-lime-600': order.status === 'settled',
+            'bg-sky-600': order.status === 'process',
+            'bg-amber-600': order.status === 'reserved',
+            'bg-red-600': order.status === 'canceled',
           })}
         >
           {order.status}
         </div>,
         <DropdownAction
           menu={
-            order.status === "reserved" && profile.role !== "kitchen"
+            order.status === 'reserved' && profile.role !== 'kitchen'
               ? reservedActionList.map((item) => ({
                   label: item.label,
                   action: () =>
                     item.action(
                       order.id,
-                      (order.tables as unknown as { id: string }).id
+                      (order.tables as unknown as { id: string }).id,
                     ),
                 }))
               : [
@@ -206,7 +223,7 @@ export default function OrderManagement() {
                         Detail
                       </Link>
                     ),
-                    type: "link",
+                    type: 'link',
                   },
                 ]
           }
@@ -224,12 +241,12 @@ export default function OrderManagement() {
             placeholder="Search..."
             onChange={(e) => handleChangeSearch(e.target.value)}
           />
-          {profile.role !== "kitchen" && (
+          {profile.role !== 'kitchen' && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">Create</Button>
               </DialogTrigger>
-              <DialogCreateOrder tables={tables} refetch={refetch} />
+              <DialogCreateOrder tables={tables} />
             </Dialog>
           )}
         </div>

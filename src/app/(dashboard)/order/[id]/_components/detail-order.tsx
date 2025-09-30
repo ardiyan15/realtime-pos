@@ -1,82 +1,103 @@
-"use client";
+'use client';
 
-import DataTable from "@/components/common/data-table";
-import { Button } from "@/components/ui/button";
-import { HEADER_TABLE_DETAIL_ORDER } from "@/constants/order-constant";
-import useDataTable from "@/hooks/use-data-table";
-import { createClient } from "@/lib/supabase/client";
-import { cn, convertIDR } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
-import Link from "next/link";
-import { startTransition, useActionState, useEffect, useMemo } from "react";
-import { toast } from "sonner";
-import Summary from "./summary";
+import DataTable from '@/components/common/data-table';
+import { Button } from '@/components/ui/button';
+import { HEADER_TABLE_DETAIL_ORDER } from '@/constants/order-constant';
+import useDataTable from '@/hooks/use-data-table';
+import { createClientSupabase } from '@/lib/supabase/default';
+import { cn, convertIDR } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
+import Link from 'next/link';
+import { startTransition, useActionState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import Summary from './summary';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { EllipsisVertical } from "lucide-react";
-import { updateStatusOrderItem } from "../../actions";
-import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
-import { useAuthStore } from "@/stores/auth-store";
+} from '@/components/ui/dropdown-menu';
+import { EllipsisVertical } from 'lucide-react';
+import { updateStatusOrderItem } from '../../actions';
+import { INITIAL_STATE_ACTION } from '@/constants/general-constant';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function DetailOrder({ id }: { id: string }) {
-  const supabase = createClient();
+  const supabase = createClientSupabase();
   const { currentPage, currentLimit, handleChangePage, handleChangeLimit } =
     useDataTable();
-
   const profile = useAuthStore((state) => state.profile);
 
   const { data: order } = useQuery({
-    queryKey: ["order", id],
+    queryKey: ['order', id],
     queryFn: async () => {
       const result = await supabase
-        .from("orders")
-        .select("id, customer_name, status, payment_token, tables (name, id)")
-        .eq("order_id", id)
+        .from('orders')
+        .select('id, customer_name, status, payment_token, tables (name, id)')
+        .eq('order_id', id)
         .single();
 
       if (result.error)
-        toast.error("Get Order data failed", {
+        toast.error('Get Order data failed', {
           description: result.error.message,
         });
 
       return result.data;
     },
-
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel('change-order')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders_menus',
+          filter: `order_id=eq.${order.id}`,
+        },
+        () => {
+          refetchOrderMenu();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id]);
 
   const {
     data: orderMenu,
     isLoading: isLoadingOrderMenu,
     refetch: refetchOrderMenu,
   } = useQuery({
-    queryKey: ["orders_menu", order?.id, currentPage, currentLimit],
+    queryKey: ['orders_menu', order?.id, currentPage, currentLimit],
     queryFn: async () => {
       const result = await supabase
-        .from("orders_menus")
-        .select("*, menus (id, name, image_url, price)", { count: "exact" })
-        .eq("order_id", order?.id)
-        .order("status");
+        .from('orders_menus')
+        .select('*, menus (id, name, image_url, price)', { count: 'exact' })
+        .eq('order_id', order?.id)
+        .order('status');
 
       if (result.error)
-        toast.error("Get Order Menu data failed", {
+        toast.error('Get order menu data failed', {
           description: result.error.message,
         });
 
       return result;
     },
-
     enabled: !!order?.id,
   });
 
   const [updateStatusOrderState, updateStatusOrderAction] = useActionState(
     updateStatusOrderItem,
-    INITIAL_STATE_ACTION
+    INITIAL_STATE_ACTION,
   );
 
   const handleUpdateStatusOrder = async (data: {
@@ -84,8 +105,8 @@ export default function DetailOrder({ id }: { id: string }) {
     status: string;
   }) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value);
+    Object.entries(data).forEach(([Key, value]) => {
+      formData.append(Key, value);
     });
 
     startTransition(() => {
@@ -94,15 +115,14 @@ export default function DetailOrder({ id }: { id: string }) {
   };
 
   useEffect(() => {
-    if (updateStatusOrderState?.status === "error") {
-      toast.error("Update Status Order Failed", {
+    if (updateStatusOrderState?.status === 'error') {
+      toast.error('Update Status Order Failed', {
         description: updateStatusOrderState.errors?._form?.[0],
       });
     }
 
-    if (updateStatusOrderState?.status === "success") {
-      toast.success("Update Status Order Success");
-      refetchOrderMenu();
+    if (updateStatusOrderState?.status === 'success') {
+      toast.success('Update Status Order Success');
     }
   }, [updateStatusOrderState]);
 
@@ -121,17 +141,17 @@ export default function DetailOrder({ id }: { id: string }) {
           <div className="flex flex-col">
             {item.menus.name} x {item.quantity}
             <span className="text-xs text-muted-foreground">
-              {item.notes || "No Notes"}
+              {item.notes || 'No Notes'}
             </span>
           </div>
         </div>,
         <div>{convertIDR(item.menus.price * item.quantity)}</div>,
         <div
-          className={cn(`px-2 py-1 rounded-full text-white w-fit capitalize`, {
-            "bg-gray-500": item.status === "pending",
-            "bg-yellow-500": item.status === "process",
-            "bg-blue-500": item.status === "ready",
-            "bg-green-500": item.status === "served",
+          className={cn('px-2 py-1 rounded-full text-white w-fit capitalize', {
+            'bg-gray-500': item.status === 'pending',
+            'bg-yellow-500': item.status === 'process',
+            'bg-blue-500': item.status === 'ready',
+            'bg-green-500': item.status === 'served',
           })}
         >
           {item.status}
@@ -141,8 +161,8 @@ export default function DetailOrder({ id }: { id: string }) {
             <Button
               variant="ghost"
               className={cn(
-                "data-[state=open]:bg-muted text-muted-foreground flex size-8",
-                { hidden: item.status === "served" }
+                'data-[state=open]:bg-muted text-muted-foreground flex size-8',
+                { hidden: item.status === 'served' },
               )}
               size="icon"
             >
@@ -150,8 +170,8 @@ export default function DetailOrder({ id }: { id: string }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            {["pending", "process", "ready"].map((status, index) => {
-              const nextStatus = ["process", "ready", "served"][index];
+            {['pending', 'process', 'ready'].map((status, index) => {
+              const nextStatus = ['process', 'ready', 'served'][index];
               return (
                 item.status === status && (
                   <DropdownMenuItem
@@ -185,7 +205,7 @@ export default function DetailOrder({ id }: { id: string }) {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between gap-4 w-full">
         <h1 className="text-2xl font-bold">Detail Order</h1>
-        {profile.role !== "kitchen" && (
+        {profile.role !== 'kitchen' && (
           <Link href={`/order/${id}/add`}>
             <Button>Add Order Item</Button>
           </Link>
