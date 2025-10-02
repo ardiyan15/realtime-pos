@@ -52,21 +52,6 @@ export default function CartSection({
   const [addOrderItemState, addOrderItemAction, isPendingAddOrderItem] =
     useActionState(addOrderItem, INITIAL_STATE_ACTION);
 
-  const handleOrder = async () => {
-    const data = {
-      order_id: id,
-      items: carts.map((item) => ({
-        order_id: order?.id ?? "",
-        ...item,
-        status: "pending",
-      })),
-    };
-
-    startTransition(() => {
-      addOrderItemAction(data);
-    });
-  };
-
   return (
     <Card className="w-full shadow-sm">
       <CardContent className="space-y-4">
