@@ -30,9 +30,7 @@ export default function Summary({
   id: string;
 }) {
   const { grandTotal, totalPrice, tax, service } = usePricing(orderMenu);
-
   const profile = useAuthStore((state) => state.profile);
-
   const isAllServed = useMemo(() => {
     return orderMenu?.every((item) => item.status === 'served');
   }, [orderMenu]);
@@ -107,7 +105,11 @@ export default function Summary({
             <Button
               type="submit"
               onClick={handleGeneratePayment}
-              disabled={!isAllServed || isPendingGeneratePayment}
+              disabled={
+                !isAllServed ||
+                isPendingGeneratePayment ||
+                orderMenu?.length === 0
+              }
               className="w-full font-semibold bg-teal-500 hover:bg-teal-600 text-white cursor-pointer"
             >
               {isPendingGeneratePayment ? (
